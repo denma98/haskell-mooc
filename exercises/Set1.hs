@@ -43,7 +43,6 @@ double x = x * 2
 quadruple :: Integer -> Integer
 quadruple x = double (double x)
 
-
 ------------------------------------------------------------------------------
 -- Ex 4: define the function distance. It should take four arguments of
 -- type Double: x1, y1, x2, and y2 and return the (euclidean) distance

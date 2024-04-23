@@ -13,6 +13,8 @@ import Mooc.Todo
 --
 -- The constructors don't need any fields.
 
+data Vehicle = Bike | Bus | Tram | Train
+  deriving Show
 
 ------------------------------------------------------------------------------
 -- Ex 2: Define the type BusTicket that can represent values like these:
@@ -20,6 +22,8 @@ import Mooc.Todo
 --  - MonthlyTicket "January"
 --  - MonthlyTicket "December"
 
+data BusTicket = SingleTicket | MonthlyTicket String
+  deriving Show
 
 ------------------------------------------------------------------------------
 -- Ex 3: Here's the definition for a datatype ShoppingEntry that
@@ -48,7 +52,7 @@ twoBananas = MkShoppingEntry "Banana" 1.1 2
 --   totalPrice twoBananas   ==> 2.2
 
 totalPrice :: ShoppingEntry -> Double
-totalPrice = todo
+totalPrice (MkShoppingEntry _ price count) = price * fromIntegral count
 
 -- buyOneMore should increment the count in an entry by one
 --
@@ -56,7 +60,7 @@ totalPrice = todo
 --   buyOneMore twoBananas    ==> MkShoppingEntry "Banana" 1.1 3
 
 buyOneMore :: ShoppingEntry -> ShoppingEntry
-buyOneMore = todo
+buyOneMore (MkShoppingEntry name price count) = MkShoppingEntry name price (count + 1)
 
 ------------------------------------------------------------------------------
 -- Ex 4: define a datatype Person, which should contain the age (an
@@ -96,27 +100,27 @@ setAge age p = todo
 --   getY (up (up origin))    ==> 2
 --   getX (up (right origin)) ==> 1
 
-data Position = PositionUndefined
+data Position = Position Int Int
 
 -- origin is a Position value with x and y set to 0
 origin :: Position
-origin = todo
+origin = Position 0 0
 
 -- getX returns the x of a Position
 getX :: Position -> Int
-getX = todo
+getX (Position x _) = x
 
 -- getY returns the y of a position
 getY :: Position -> Int
-getY = todo
+getY (Position _ y) = y
 
 -- up increases the y value of a position by one
 up :: Position -> Position
-up = todo
+up (Position x y) = Position x (y + 1)
 
 -- right increases the x value of a position by one
 right :: Position -> Position
-right = todo
+right (Position x y) = Position (x + 1) y
 
 ------------------------------------------------------------------------------
 -- Ex 6: Here's a datatype that represents a student. A student can
@@ -131,7 +135,11 @@ data Student = Freshman | NthYear Int | Graduated
 -- graduated student stays graduated even if he studies.
 
 study :: Student -> Student
-study = todo
+study Freshman = NthYear 1
+study (NthYear n)
+  | n < 7 = NthYear (n + 1)
+  | otherwise = Graduated
+study Graduated = Graduated
 
 ------------------------------------------------------------------------------
 -- Ex 7: define a datatype UpDown that represents a counter that can
@@ -150,25 +158,28 @@ study = todo
 -- get (tick (tick (toggle (tick zero))))
 --   ==> -1
 
-data UpDown = UpDownUndefined1 | UpDownUndefined2
+data UpDown = Increasing Int | Decreasing Int
 
 -- zero is an increasing counter with value 0
 zero :: UpDown
-zero = todo
+zero = Increasing 0
 
 -- get returns the counter value
 get :: UpDown -> Int
-get ud = todo
+get (Increasing n) = n
+get (Decreasing n) = n
 
 -- tick increases an increasing counter by one or decreases a
 -- decreasing counter by one
 tick :: UpDown -> UpDown
-tick ud = todo
+tick (Increasing n) = Increasing (n + 1)
+tick (Decreasing n) = Decreasing (n - 1)
 
 -- toggle changes an increasing counter into a decreasing counter and
 -- vice versa
 toggle :: UpDown -> UpDown
-toggle ud = todo
+toggle (Increasing n) = Decreasing n
+toggle (Decreasing n) = Increasing n
 
 ------------------------------------------------------------------------------
 -- Ex 8: you'll find a Color datatype below. It has the three basic
@@ -198,7 +209,11 @@ data Color = Red | Green | Blue | Mix Color Color | Invert Color
   deriving Show
 
 rgb :: Color -> [Double]
-rgb col = todo
+rgb Red = [1, 0, 0]
+rgb Green = [0, 1, 0]
+rgb Blue = [0, 0, 1]
+rgb (Mix c1 c2) = zipWith (\x y -> (x + y) / 2) (rgb c1) (rgb c2)
+rgb (Invert c) = map (1 -) (rgb c)
 
 ------------------------------------------------------------------------------
 -- Ex 9: define a parameterized datatype OneOrTwo that contains one or
@@ -207,6 +222,8 @@ rgb col = todo
 -- Examples:
 --   One True         ::  OneOrTwo Bool
 --   Two "cat" "dog"  ::  OneOrTwo String
+
+data OneOrTwo a = One a | Two a a
 
 
 ------------------------------------------------------------------------------
@@ -228,14 +245,16 @@ rgb col = todo
 -- Also define the functions toList and fromList that convert between
 -- KeyVals and lists of pairs.
 
-data KeyVals k v = KeyValsUndefined
+data KeyVals k v = Empty | Pair k v (KeyVals k v)
   deriving Show
 
 toList :: KeyVals k v -> [(k,v)]
-toList = todo
+toList Empty = []
+toList (Pair k v rest) = (k, v) : toList rest
 
 fromList :: [(k,v)] -> KeyVals k v
-fromList = todo
+fromList [] = Empty
+fromList ((k,v):xs) = Pair k v (fromList xs)
 
 ------------------------------------------------------------------------------
 -- Ex 11: The data type Nat is the so called Peano
@@ -252,10 +271,16 @@ data Nat = Zero | PlusOne Nat
   deriving (Show,Eq)
 
 fromNat :: Nat -> Int
-fromNat n = todo
+fromNat Zero = 0
+fromNat (PlusOne n) = 1 + fromNat n
 
 toNat :: Int -> Maybe Nat
-toNat z = todo
+toNat z
+  | z < 0 = Nothing
+  | z == 0 = Just Zero
+  | otherwise = case toNat (z - 1) of
+                  Just n -> Just (PlusOne n)
+                  Nothing -> Nothing
 
 ------------------------------------------------------------------------------
 -- Ex 12: While pleasingly simple in its definition, the Nat datatype is not
@@ -301,10 +326,8 @@ toNat z = todo
 --   map toBin [0..5] ==>
 --     [O End,I End,O (I End),I (I End),O (O (I End)),I (O (I End))]
 --   toBin 57 ==> I (O (O (I (I (I End)))))
---
--- Challenge: Can you implement toBin by directly converting its input into a
--- sequence of bits instead of repeatedly applying inc?
---
+
+
 data Bin = End | O Bin | I Bin
   deriving (Show, Eq)
 
@@ -315,10 +338,17 @@ inc (O b) = I b
 inc (I b) = O (inc b)
 
 prettyPrint :: Bin -> String
-prettyPrint = todo
+prettyPrint End = ""
+prettyPrint (O b) = '0' : prettyPrint b
+prettyPrint (I b) = '1' : prettyPrint b
 
 fromBin :: Bin -> Int
-fromBin = todo
+fromBin End = 0
+fromBin (O b) = 2 * fromBin b
+fromBin (I b) = 2 * fromBin b + 1
 
 toBin :: Int -> Bin
-toBin = todo
+toBin 0 = End
+toBin n
+  | n `mod` 2 == 0 = O (toBin (n `div` 2))
+  | otherwise = I (toBin (n `div` 2))
