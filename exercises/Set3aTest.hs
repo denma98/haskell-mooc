@@ -253,3 +253,36 @@ ex14_interpreter_2 = property $ do
       input = concatMap (\x -> f x ++ ["printY"]) diffs
       output = map show nums
   return $ $(testing [|interpreter input|]) (?== output)
+ex13_empty = property $ do
+  n <- choose (0,9) :: Gen Int
+  let input  = multiApp id [] n
+      output = [] :: [Int]
+  return $ counterexample ("multiApp id [] " ++ show n)
+         $ input ?== output
+
+ex13_scalability = property $ do
+  n <- choose (0,9) :: Gen Int
+  k <- choose (0,9) :: Gen Int
+  let input  = multiApp (sum::[Int]->Int) (replicate n (succ::Int->Int)) k
+      output = n*(k+1)
+  return $ counterexample ("multiApp sum (replicate " ++ show n ++ " succ) " ++ show k)
+         $ input ?== output
+
+ex13_arithmetic = property $ do
+  n  <- choose (0,9) :: Gen Int
+  let gs     = [(+1), (*2), (`div`2), (^2)]
+      input  = multiApp (sum::[Int]->Int) gs n
+      output = (n + 1) + (n * 2) + (n `div` 2) + n^2
+  return $ counterexample ("multiApp sum [(+1), (*2), (`div`2), (^2)]" ++ show n)
+         $ input ?== output
+
+ex13_strings = property $ do
+  words <- vectorOf 3 word
+  let gs     = [(\xs -> [head xs]), tail, reverse]
+      input  = multiApp id gs words
+      output = [[head words], tail words, reverse words]
+  return $ counterexample ("multiApp id [(\\xs -> [head xs]), tail, reverse]" ++ show words)
+         $ input ?== output
+
+ex13_mixed = counterexample ("multiApp sum [head, last] [1,2,3,4]") $
+             multiApp (sum::[Int]->Int) [head, last] [1::Int,2,3,4] ?== 5
