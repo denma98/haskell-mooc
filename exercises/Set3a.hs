@@ -1,8 +1,3 @@
--- Exercise set 3a
---
---  * lists
---  * functional programming
-
 module Set3a where
 
 import Mooc.Todo
@@ -28,7 +23,9 @@ import Data.List
 --  maxBy head   [1,2,3] [4,5]  ==>  [4,5]
 
 maxBy :: (a -> Int) -> a -> a -> a
-maxBy measure a b = todo
+maxBy measure a b
+  | measure a > measure b = a
+  | otherwise = b
 
 ------------------------------------------------------------------------------
 -- Ex 2: implement the function mapMaybe that takes a function and a
@@ -58,8 +55,6 @@ mapMaybe2 :: (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
 mapMaybe2 f (Just x) (Just y) = Just (f x y)
 mapMaybe2 _ _ _ = Nothing
 
-
-
 ------------------------------------------------------------------------------
 -- Ex 4: define the functions firstHalf and palindrome so that
 -- palindromeHalfs returns the first halfs of all palindromes in its
@@ -86,8 +81,6 @@ firstHalf xs = take (length xs `div` 2 + length xs `mod` 2) xs
 palindrome :: String -> Bool
 palindrome xs = xs == reverse xs
 
-
-
 ------------------------------------------------------------------------------
 -- Ex 5: Implement a function capitalize that takes in a string and
 -- capitalizes the first letter of each word in it.
@@ -110,8 +103,6 @@ capitalizeFirst :: String -> String
 capitalizeFirst [] = []
 capitalizeFirst (x:xs) = toUpper x : xs
 
-
-
 ------------------------------------------------------------------------------
 -- Ex 6: powers k max should return all the powers of k that are less
 -- than or equal to max. For example:
@@ -128,8 +119,6 @@ capitalizeFirst (x:xs) = toUpper x : xs
 
 powers :: Int -> Int -> [Int]
 powers k max = takeWhile (<= max) [k^x | x <- [0..]]
-
-
 
 ------------------------------------------------------------------------------
 -- Ex 7: implement a functional while loop. While should be a function
@@ -156,8 +145,6 @@ while check update value
     | check value = while check update (update value)
     | otherwise = value
 
-
-
 ------------------------------------------------------------------------------
 -- Ex 8: another version of a while loop. This time, the check
 -- function returns an Either value. A Left value means stop, a Right
@@ -180,8 +167,6 @@ whileRight check x = case check x of
     Left result -> result
     Right next -> whileRight check next
 
-
-
 -- for the whileRight examples:
 -- step k x doubles x if it's less than k
 step :: Int -> Int -> Either Int Int
@@ -193,7 +178,9 @@ bomb 0 = Left "BOOM"
 bomb x = Right (x-1)
 
 ------------------------------------------------------------------------------
--- Ex 9: given a list of strings and a length, return all strings that
+-- Ex 9
+
+--given a list of strings and a length, return all strings that
 --  * have the given length
 --  * are made by catenating two input strings
 --
@@ -205,8 +192,6 @@ bomb x = Right (x-1)
 
 joinToLength :: Int -> [String] -> [String]
 joinToLength len xs = [a ++ b | a <- xs, b <- xs, length (a ++ b) == len]
-
-
 
 ------------------------------------------------------------------------------
 -- Ex 10: implement the operator +|+ that returns a list with the first
@@ -220,11 +205,9 @@ joinToLength len xs = [a ++ b | a <- xs, b <- xs, length (a ++ b) == len]
 --   [] +|+ [True]        ==> [True]
 --   [] +|+ []            ==> []
 
--- (+|+) :: [a] -> [a] -> [a]
--- (+|+) [] _ = []
--- (+|+) _ [] = []
--- (+|+) (x:_) (y:_) = [x, y]
-
+(+|+) :: [a] -> [a] -> [a]
+[] +|+ _ = []
+(x:_) +|+ (y:_) = [x, y]
 
 ------------------------------------------------------------------------------
 -- Ex 11: remember the lectureParticipants example from Lecture 2? We
@@ -243,7 +226,6 @@ joinToLength len xs = [a ++ b | a <- xs, b <- xs, length (a ++ b) == len]
 sumRights :: [Either a Int] -> Int
 sumRights = sum . rights
 
-
 ------------------------------------------------------------------------------
 -- Ex 12: recall the binary function composition operation
 -- (f . g) x = f (g x). In this exercise, your task is to define a function
@@ -261,8 +243,6 @@ sumRights = sum . rights
 multiCompose :: [a -> a] -> a -> a
 multiCompose [] x = x
 multiCompose (f:fs) x = multiCompose fs (f x)
-
-
 
 ------------------------------------------------------------------------------
 -- Ex 13: let's consider another way to compose multiple functions. Given
@@ -285,8 +265,6 @@ multiCompose (f:fs) x = multiCompose fs (f x)
 
 multiApp :: (a -> b) -> [a -> a] -> a -> [b]
 multiApp f gs x = map (\g -> f (g x)) gs
-
-
 
 ------------------------------------------------------------------------------
 -- Ex 14: in this exercise you get to implement an interpreter for a
@@ -333,3 +311,4 @@ interpret (command:commands) x y result
     | command == "printX" = interpret commands x y (show x : result)
     | command == "printY" = interpret commands x y (show y : result)
     | otherwise = interpret commands x y result
+
