@@ -13,6 +13,8 @@ import Mooc.Todo
 -- We'll use the JuicyPixels library to generate images. The library
 -- exposes the Codec.Picture module that has everything we need.
 import Codec.Picture
+import Codec.Picture.Types (PixelRGB8)
+
 
 -- Let's start by defining Colors and Pictures.
 
@@ -417,28 +419,30 @@ xy = Picture f
 -- map (10,15) to (15,10).
 
 -- Remove the duplicate instance declaration for Transform Fill
--- instance Transform Fill where
 
-
-data Fill = Fill Color
 
 instance Transform Fill where
-  apply = todo
+  apply (Fill color) _ = solid color
 
+data Fill = Fill Color
+  deriving Show
 data Zoom = Zoom Int
   deriving Show
 
 instance Transform Zoom where
-  apply = todo
+  apply (Zoom z) (Picture f) = Picture (f . zoomCoord z)
 
 data Flip = FlipX | FlipY | FlipXY
   deriving Show
 
 instance Transform Flip where
-  apply = todo
-------------------------------------------------------------------------------
+  apply FlipX (Picture f) = Picture (f . flipCoordX)
+    where flipCoordX (Coord x y) = Coord (-x) y
+  apply FlipY (Picture f) = Picture (f . flipCoordY)
+    where flipCoordY (Coord x y) = Coord x (-y)
+  apply FlipXY (Picture f) = Picture (f . flipCoordXY)
+    where flipCoordXY (Coord x y) = Coord y x
 
-------------------------------------------------------------------------------
 -- Ex 8: the Chain type represents a combination of two transforms.
 -- Implement a Transform instance for Chain.
 --
@@ -450,26 +454,9 @@ instance Transform Flip where
 data Chain a b = Chain a b
   deriving Show
 
-instance Transform (Chain a b) where
-  apply = todo
-------------------------------------------------------------------------------
+instance (Transform a, Transform b) => Transform (Chain a b) where
+  apply (Chain t1 t2) picture = apply t1 (apply t2 picture)
 
--- Now we can redefine largeVerticalStripes using the above Transforms.
--- See the picture by running
---   render largeVerticalStripes2 400 300 "large-stripes2.png"
-largeVerticalStripes2 :: Picture
-largeVerticalStripes2 = apply (Chain (Zoom 5) FlipXY) (stripes red yellow)
-
--- We can also define a nice checkered pattern by overlaying two stripes.
--- See it by running
---    render checkered 400 30 "checkered.png"
-flipBlend :: Picture -> Picture
-flipBlend picture = blend picture (apply FlipXY picture)
-
-checkered :: Picture
-checkered = flipBlend largeVerticalStripes2
-
-------------------------------------------------------------------------------
 -- Ex 9: implement a Transform instance for Blur.
 --
 -- Produce a blurred version of an image by taking the average colors
@@ -489,8 +476,14 @@ data Blur = Blur
   deriving Show
 
 instance Transform Blur where
-  apply = todo
+  apply Blur (Picture f) = Picture g
+    where g coord = averageColor (f coord) (f (Coord (getX coord + 1) (getY coord)))
+                    (f (Coord (getX coord - 1) (getY coord))) (f (Coord (getX coord) (getY coord + 1)))
+                    (f (Coord (getX coord) (getY coord - 1)))
+          averageColor (Color r1 g1 b1) (Color r2 g2 b2) (Color r3 g3 b3) (Color r4 g4 b4) (Color r5 g5 b5) =
+            Color (div (r1 + r2 + r3 + r4 + r5) 5) (div (g1 + g2 + g3 + g4 + g5) 5) (div (b1 + b2 + b3 + b4 + b5) 5)
 ------------------------------------------------------------------------------
+
 
 ------------------------------------------------------------------------------
 -- Ex 10: blur an image multiple times. Implement a Transform instance
@@ -514,4 +507,3 @@ instance Transform BlurMany where
 --   render blurredSnowman 400 300 "blurred.png"
 
 blurredSnowman = apply (BlurMany 2) exampleSnowman
-

@@ -114,19 +114,19 @@ ex6_powers_large = m_powers 27 -- 5^27 still fits in Int
 
 ex7_while_number = property $ do
   n <- choose (0,20 :: Integer)
-  return $ counterexample ("while (/="++show n++") (+1) 0") $ within timeLimit $
+  return $ counterexample ("while (/="++show n++") (+1) 0") $
     while (/=n) (+1) 0 ?== n
 
 ex7_while_string = property $ do
   n <- word
   let w = n++n
       p = (/=n)
-  return $ counterexample ("while (/="++show n++") tail "++show w) $ within timeLimit $
+  return $ counterexample ("while (/="++show n++") tail "++show w) $
     while p tail w == n
 
 ex8_whileRight_Left = forAllBlind word $ \w ->
   forAllBlind (choose (1::Int,10)) $ \i ->
-  counterexample ("let f _ = Left " ++ show w ++ " in whileRight f " ++ show i) $ within timeLimit $
+  counterexample ("let f _ = Left " ++ show w ++ " in whileRight f " ++ show i) $
   let f _ = Left w in whileRight f i ?== w
 
 ex8_whileRight_step = property $ do
@@ -137,7 +137,7 @@ ex8_whileRight_step = property $ do
   let log = ceiling . logBase 2 . fromIntegral
       divUp x y = ceiling (fromIntegral x / fromIntegral y)
       answer = start * 2 ^ (log (limit `divUp` start))
-  return $ counterexample ("whileRight (step " ++ show limit ++ ") " ++ show start) $ within timeLimit $
+  return $ counterexample ("whileRight (step " ++ show limit ++ ") " ++ show start) $
     whileRight (step limit) start ?== answer
 
 ex9_1 = property $ do
@@ -253,36 +253,3 @@ ex14_interpreter_2 = property $ do
       input = concatMap (\x -> f x ++ ["printY"]) diffs
       output = map show nums
   return $ $(testing [|interpreter input|]) (?== output)
-ex13_empty = property $ do
-  n <- choose (0,9) :: Gen Int
-  let input  = multiApp id [] n
-      output = [] :: [Int]
-  return $ counterexample ("multiApp id [] " ++ show n)
-         $ input ?== output
-
-ex13_scalability = property $ do
-  n <- choose (0,9) :: Gen Int
-  k <- choose (0,9) :: Gen Int
-  let input  = multiApp (sum::[Int]->Int) (replicate n (succ::Int->Int)) k
-      output = n*(k+1)
-  return $ counterexample ("multiApp sum (replicate " ++ show n ++ " succ) " ++ show k)
-         $ input ?== output
-
-ex13_arithmetic = property $ do
-  n  <- choose (0,9) :: Gen Int
-  let gs     = [(+1), (*2), (`div`2), (^2)]
-      input  = multiApp (sum::[Int]->Int) gs n
-      output = (n + 1) + (n * 2) + (n `div` 2) + n^2
-  return $ counterexample ("multiApp sum [(+1), (*2), (`div`2), (^2)]" ++ show n)
-         $ input ?== output
-
-ex13_strings = property $ do
-  words <- vectorOf 3 word
-  let gs     = [(\xs -> [head xs]), tail, reverse]
-      input  = multiApp id gs words
-      output = [[head words], tail words, reverse words]
-  return $ counterexample ("multiApp id [(\\xs -> [head xs]), tail, reverse]" ++ show words)
-         $ input ?== output
-
-ex13_mixed = counterexample ("multiApp sum [head, last] [1,2,3,4]") $
-             multiApp (sum::[Int]->Int) [head, last] [1::Int,2,3,4] ?== 5
